@@ -18,7 +18,7 @@ class LogifierServiceProvider extends ServiceProvider
         $configFile = __DIR__ . '/config/config.php';
         $this->mergeConfigFrom($configFile, 'logifier');
 
-        $this->publishes([$configFile => config_path('logifier')]);
+        $this->publishes([$configFile => config_path('logifier')], 'config');
 
         $this->registerCustomLogger();
     }
