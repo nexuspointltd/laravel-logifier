@@ -31,10 +31,10 @@ class LogifierServiceProvider extends ServiceProvider
 
     protected function registerCustomLogger()
     {
-        if ($this->app['config']->get('app.debug')) return;
+    	$config = $this->app['config']->get('logifier.slack');
+        if (!$config['enabled']) return;
 
         $monolog = \Log::getMonolog();
-        $config = $this->app['config']->get('logifier.slack');
 
         $handler = new \Monolog\Handler\SlackHandler(
             $config['token'], // token
