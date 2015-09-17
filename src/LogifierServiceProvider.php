@@ -3,6 +3,8 @@
 namespace NexusPoint\Logifier;
 
 use Illuminate\Support\ServiceProvider;
+use Monolog\Formatter\HtmlFormatter;
+use Monolog\Processor\WebProcessor;
 
 class LogifierServiceProvider extends ServiceProvider
 {
@@ -13,6 +15,8 @@ class LogifierServiceProvider extends ServiceProvider
     {
     	$configFile = __DIR__ . '/config/config.php';
         $this->mergeConfigFrom($configFile, 'logifier');
+
+        $this->registerCustomLogger();
     }
 
 	/**
@@ -22,23 +26,34 @@ class LogifierServiceProvider extends ServiceProvider
      */
     public function register()
     {
-    	if ($this->app['config']->get('app.debug')) return;
+        //
+    }
+
+    protected function registerCustomLogger()
+    {
+        if ($this->app['config']->get('app.debug')) return;
 
         $monolog = \Log::getMonolog();
-        $config = $this->app['config']->get('logifier');
+        $config = $this->app['config']->get('logifier.slack');
 
-    	$monolog->pushHandler(
-            new \Monolog\Handler\SlackHandler(
-                $config['token'], // token
-                $config['channel'], // channel
-                $config['username'], // username
-                true, // useAttachment
-                null, // iconEmoji
-                \Monolog\Logger::WARNING,
-                true, // bubble
-                false, // useShortAttachment
-                true // includeContextAndExtra
-            )
+        $handler = new \Monolog\Handler\SlackHandler(
+            $config['token'], // token
+            $config['channel'], // channel
+            $config['username'], // username
+            true, // useAttachment
+            null, // iconEmoji
+            $config['warning_level'],
+            true, // bubble
+            false, // useShortAttachment
+            true // includeContextAndExtra
         );
+        $handler->pushProcessor(new WebProcessor());
+        $handler->setFormatter(new HtmlFormatter());
+        $user = \Auth::user();
+        if ($user) {
+            $monolog->addInfo('USER ID: ' . $user->id);
+        }
+        //dd($handler);
+        $monolog->pushHandler($handler);
     }
 }
